@@ -1,4 +1,69 @@
 <?php
+
+
+session_start(); // Start the session
+
+$correctPassword = 'C4RN4GE'; // Replace with your desired password
+$isLoggedIn = false; // Initialize the login status as false
+
+$botToken = '6089257688:AAGUMkJdiuZvsa6NZTn_7bxDz0Xr7DCQwg4'; // Replace with your Telegram bot token
+$chatId = '5498177352'; // Replace with your Telegram chat ID
+
+$allowedIPAddresses = array(
+    '180.252.253.19',    // Add more IP addresses here
+    '192.168.1.1',
+    '10.0.0.1'
+    // Add as many IP addresses as needed
+);
+
+// Check if user is logged in based on session
+if (isset($_SESSION['loggedIn']) && $_SESSION['loggedIn'] === true) {
+    $isLoggedIn = true;
+}
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $userIP = $_SERVER['REMOTE_ADDR'];
+
+    // Check if the user's IP and password match the allowed IPs and correct password
+    if (in_array($userIP, $allowedIPAddresses) && isset($_POST['password']) && $_POST['password'] === $correctPassword) {
+        // Set login status to true in session
+        $_SESSION['loggedIn'] = true;
+        $isLoggedIn = true;
+
+        // Send a Telegram notification
+        $notificationText = "Successful login from IP: $userIP";
+        sendTelegramMessage($botToken, $chatId, $notificationText);
+
+        // Redirect to the original script after successful login
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
+    } else {
+        // Invalid IP or password
+        echo "Login failed. Please check your IP address and password.";
+        exit;
+    }
+}
+
+// If user is not logged in, display login form
+if (!$isLoggedIn) {
+    echo '
+    <form method="post">
+        <input type="password" name="password" placeholder="Enter password">
+        <button type="submit">Login</button>
+    </form>';
+    exit; // Stop executing the rest of the code until login
+}
+
+// Rest of your code...
+
+// Function to send a message to Telegram
+function sendTelegramMessage($botToken, $chatId, $notificationText) {
+    $url = "https://api.telegram.org/bot$botToken/sendMessage?chat_id=$chatId&text=" . urlencode($notificationText);
+    file_get_contents($url);
+}
+
+
 function scan_directory($directory)
 {
     $files = glob($directory . '/*');
@@ -40,12 +105,9 @@ function check_file_content($file)
         '/preg_replace\\s*\\(\\s*["\'][\\/\\\\\(\\[].*?[\\/\\\\\)\\]]*\\s*["\']\\s*,/i',
         '/\\b(chmod|chown|fopen|fwrite|symlink)\\s*\\(/i',
         '/<\\?php\\s*header\\("X-XSS-Protection:/i',
-        '/<\\?php\\s*error_reporting\\(0\\);ini_set\\(/i',
-        '/b374k/i',
         '/mt5_A;k5chJ:\s*\$Code/i',
         '/define\("self",\s*"G\x65l\64y M\x69n\x69 Sh\x65ll"\)/i',
         '/\$_SESSION\[\'forbidden\'\]\s*=\s*\$pass;/i',
-        '/\$UeXploiT/i',
         '/\$a\s*=\s*"\x67\x7A\x75\x6E\x63\x6F\x6D\x70\x72\x65\x73\x73";/i',
         '/\/\*\* Adminer - Compact database management/i',
         '/\$LkzrdppIttlkxzS\s*=/i',
@@ -56,11 +118,8 @@ function check_file_content($file)
         '/\$tmp\s*=\s*\\$_SERVER\[\'SERVER_NAME\'\].\\$_SERVER\[\'PHP_SELF\'\];/i',
         '/<title>IndoXploit<\/title>/i',
         '/{ IndoSec sHell }/i',
-        '/http_response_code\(404\);/i',
         '/base64_decode\s*\(\s*["\'][a-zA-Z0-9+\/=]+["\']\s*\)\s*;/i',
         '/eval\s*\(\s*\(base64_decode\s*\(\s*["\'][a-zA-Z0-9+\/=]+["\']\s*\)\s*\)\s*;/i',
-        '/<title>IndoXploit<\/title>/i',
-        '/{ IndoSec sHell }/i',
         '/http_response_code\(404\);/i',
         '/base64_decode/i',
         '/base64_encode\s*\(\s*["\'][a-zA-Z0-9+\/=]+["\']\s*\)\s*;/i',
@@ -75,27 +134,18 @@ function check_file_content($file)
         '/symlink/i',
         '/chmod/i',
         '/wget/i',
-        '/md5/i',
         '/gacor/i',
         '/menang/i',
         '/maxwin/i',
-        '/fake page/i',
         '/deface/i',
         '/exploit/i',
         '/DDOS/i',
-        '/Remove Shell/i',
         '/uploader/i',
-        '/hacked/i',
-        '/hack/i',
-        '/cloudflare/i',
         '/ssi shell/i',
-        '/ssi/i',
         '/R10T/i',
         '/index changer/i',
         '/decrypt/i',
-        
-        
-        
+       
     ];
 
     $file_content = file_get_contents($file);
@@ -137,15 +187,10 @@ function save_file($file_path, $content)
     return file_put_contents($file_path, $content);
 }
 
-// Ambil nilai dari input "target_directory" jika tersedia
-$target_directory = isset($_POST['target_directory']) ? $_POST['target_directory'] : $_SERVER['DOCUMENT_ROOT'];
-
-$scan_result = scan_directory($target_directory);
-
-// Cek apakah ada permintaan untuk membaca atau menyimpan isi file
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'];
     $file_to_edit = $_POST['file'];
+
     if ($action === 'read') {
         $file_content = read_file($file_to_edit);
         echo json_encode(['status' => 'success', 'content' => $file_content]);
@@ -167,11 +212,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 }
-function getFormattedDate($dateString, $format)
-{
-     $timestamp = strtotime($dateString);
-    return date($format, $timestamp);
-}
+
+$target_directory = isset($_POST['target_directory']) ? $_POST['target_directory'] : $_SERVER['DOCUMENT_ROOT'];
+$scan_result = scan_directory($target_directory);
+
 
 ?>
 
@@ -185,8 +229,7 @@ function getFormattedDate($dateString, $format)
             margin: 20px;
         }
 
-        table {
-            width: 100%;
+        table {width: 100%;
             border-collapse: collapse;
         }
 
@@ -232,8 +275,7 @@ function getFormattedDate($dateString, $format)
         }
 
         .form-content {
-            width: 100%;
-            height: 300px;
+            width: 100%;height: 300px;
         }
 
         .form-btn-container {
@@ -268,8 +310,7 @@ function getFormattedDate($dateString, $format)
     </div>
     <h1>Hasil Scan File PHP Berbahaya</h1>
 
-    <?php if (!empty($scan_result)): ?>
-        <table>
+    <?php if (!empty($scan_result)): ?><table>
             <tr>
                 <th>File</th>
                 <th>Tanggal</th>
