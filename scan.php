@@ -1,14 +1,5 @@
 <?php
 
-// Rest of your code...
-
-// Function to send a message to Telegram
-function sendTelegramMessage($botToken, $chatId, $notificationText) {
-    $url = "https://api.telegram.org/bot$botToken/sendMessage?chat_id=$chatId&text=" . urlencode($notificationText);
-    file_get_contents($url);
-}
-
-
 function scan_directory($directory)
 {
     $files = glob($directory . '/*');
